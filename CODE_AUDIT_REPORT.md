@@ -14,7 +14,7 @@
 
 ```mermaid
 pie showData title Findings by Category (100 total)
-    "Critical Bugs (1-35)" : 35
+    "Functional Defects (1-35)" : 35
     "Duplication (36-53)" : 18
     "Dead Code (54-73)" : 20
     "Code Smells (74-90)" : 17
@@ -31,7 +31,7 @@ pie showData title Findings by Severity
 
 | Section                                               | Items  |   🔴   |   🟠   |   🟡   |   🟢   |
 | ----------------------------------------------------- | :----: | :----: | :----: | :----: | :----: |
-| [A. Critical Bugs](#critical-bugs)                    |  1–35  |   10   |   13   |   6    |   6    |
+| [A. Functional Defects](#critical-bugs)               |  1–35  |   10   |   13   |   6    |   6    |
 | [B. Duplication — Shared Utils / Hooks](#duplication) | 36–53  |   0    |   4    |   10   |   4    |
 | [C. Dead Code Removal](#dead-code)                    | 54–73  |   0    |   6    |   10   |   4    |
 | [D. Code Smells & Standardization](#code-smells)      | 74–90  |   0    |   5    |   8    |   4    |
@@ -42,7 +42,7 @@ pie showData title Findings by Severity
 
 <a id="critical-bugs"></a>
 
-## A. Critical Bugs — items 1–35
+## A. Functional Defects — items 1–35
 
 <details>
 <summary><b>1 · 🔴 Critical</b> — All three MRR API URLs contain the misspelling `mananged-services` instead of `managed-services`, causing every call to `getMRRAgreement`, `saveMRRAgr…</summary>
@@ -108,13 +108,13 @@ EventType.ReviewResponseElastic = 24 → haystack is "24". lambda.eventType "2" 
 > **Fix:** Replace the `&&` with `||` in the `valuesEmpty` assignment so that null and empty arrays are both correctly detected as invalid.
 
 ```tsx
-const valuesEmpty = !filter?.values || filter.values.length === 0
+const valuesEmpty = !filter?.values || filter.values.length === 0;
 ```
 
 > **Evidence:**
 
 ```tsx
-const valuesEmpty = !filter?.values && filter?.values?.length === 0
+const valuesEmpty = !filter?.values && filter?.values?.length === 0;
 // !null(true) && undefined===0(false) → false; ![](false) short-circuits → false; !['x'](false) → false
 // valuesEmpty is ALWAYS false — empty/null values are never caught
 ```
@@ -134,20 +134,20 @@ const valuesEmpty = !filter?.values && filter?.values?.length === 0
 ```tsx
 // admin/views/Views.tsx
 interface Params {
-  tenantId: string
+    tenantId: string;
 }
 
 const Views: React.FC = () => {
-  const { tenantId } = useParams<Params>()
+    const { tenantId } = useParams<Params>();
 
-  useEffect(() => {
-    getViews(Number(tenantId), { filters: [] }).then((views) => {
-      // handle views
-    })
-  }, [tenantId])
+    useEffect(() => {
+        getViews(Number(tenantId), { filters: [] }).then((views) => {
+            // handle views
+        });
+    }, [tenantId]);
 
-  // ...
-}
+    // ...
+};
 ```
 
 > **Evidence:**
@@ -172,14 +172,14 @@ Views.api.ts:6-7: `export const getViews = async (tenantId: number, ...) => { co
 ```tsx
 // Place this useEffect ABOVE the `if (!profile)` guard, alongside the other hooks at lines 334-339:
 useEffect(() => {
-  if (profile.hasMultipleAccounts && isEmpty(users)) {
-    // ... existing effect body unchanged ...
-  }
-}, [profile])
+    if (profile.hasMultipleAccounts && isEmpty(users)) {
+        // ... existing effect body unchanged ...
+    }
+}, [profile]);
 
 // Then the early return follows unconditionally:
 if (!profile) {
-  return <div className='r4e-top-nav' />
+    return <div className="r4e-top-nav" />;
 }
 ```
 
@@ -255,19 +255,19 @@ L266: `<Table {...getTableProps}>` — spreads the function, NOT invoked (contra
 
 ```tsx
 const withLocale = <P extends object>(Component: ComponentType<P>) => {
-  return (props: any): JSX.Element => {
-    let { locale } = props
-    const [{ profile }] = useProfile() // unconditional — moved out of if-block
-    if (!locale) {
-      switch (
-        profile?.user.locale
-        // ... existing cases unchanged
-      ) {
-      }
-    }
-    return <Component locale={locale} {...props} />
-  }
-}
+    return (props: any): JSX.Element => {
+        let { locale } = props;
+        const [{ profile }] = useProfile(); // unconditional — moved out of if-block
+        if (!locale) {
+            switch (
+                profile?.user.locale
+                // ... existing cases unchanged
+            ) {
+            }
+        }
+        return <Component locale={locale} {...props} />;
+    };
+};
 ```
 
 > **Evidence:**
@@ -292,8 +292,7 @@ if (!locale) {
 > **Fix:** Replace the array assignment with an index lookup: `const existingPrivilege = existingPrivileges.length &gt; 0 ? existingPrivileges[0] : null;`. This yields a real privilege object so the `.id` guard passes, the DELETE fires correctly, and the PUBLIC-branch spread copies actual privilege fields rather than array indices.
 
 ```ts
-const existingPrivilege =
-  existingPrivileges.length > 0 ? existingPrivileges[0] : null
+const existingPrivilege = existingPrivileges.length > 0 ? existingPrivileges[0] : null;
 ```
 
 > **Evidence:**
@@ -319,14 +318,8 @@ L147: id: existingPrivilege?.id || String(dashboardId),
 > **Fix:** Remove the `globalFilters.length === 0` clause from the guard at line 126. The remaining conditions (`!report`, `!tenantId`, `!isFiltersReady`, `isWidgetBuilderOpen`, `!globalFilters`) are sufficient. Downstream `executeSingleWidget` → `mergeGlobalAndPanelRunFilters` handles an empty array correctly, so widgets will run with only panel-level filters applied.
 
 ```ts
-if (
-  !report ||
-  !tenantId ||
-  !isFiltersReady ||
-  isWidgetBuilderOpen ||
-  !globalFilters
-) {
-  return
+if (!report || !tenantId || !isFiltersReady || isWidgetBuilderOpen || !globalFilters) {
+    return;
 }
 ```
 
@@ -357,20 +350,14 @@ if (
 > **Fix:** Wrap the params variable in a config object so axios serializes it as a query string: replace the bare `params` argument with `{ params }` in the axios.get call, matching the convention used by all 23 sibling API files (e.g. Entities.api.ts:14).
 
 ```ts
-const response: AxiosResponse = await axios.get(
-  `/api/tenants/${tenantId}/attribute-lookups`,
-  { params },
-)
+const response: AxiosResponse = await axios.get(`/api/tenants/${tenantId}/attribute-lookups`, { params });
 ```
 
 > **Evidence:**
 
 ```ts
-const params: any = { agencyId, tenantId, search, args }
-const response: AxiosResponse = await axios.get(
-  `/api/tenants/${tenantId}/attribute-lookups`,
-  params,
-)
+const params: any = { agencyId, tenantId, search, args };
+const response: AxiosResponse = await axios.get(`/api/tenants/${tenantId}/attribute-lookups`, params);
 ```
 
 > **Note:** The sole caller is CreateLocation.tsx:91. After this fix, agencyId, tenantId, and search will be sent as query parameters for the first time; the endpoint already supports them (as do sibling endpoints), so no backend contract change is needed.
@@ -387,11 +374,10 @@ const response: AxiosResponse = await axios.get(
 
 ```tsx
 if (
-  !selectedAttribute &&
-  (Number(eventType?.value) === EventType.Survey ||
-    Number(eventType?.value) === EventType.ElasticSurvey)
+    !selectedAttribute &&
+    (Number(eventType?.value) === EventType.Survey || Number(eventType?.value) === EventType.ElasticSurvey)
 ) {
-  selectedAttribute = find(surveyData.current, { name: option.value })
+    selectedAttribute = find(surveyData.current, { name: option.value });
 }
 ```
 
@@ -399,11 +385,11 @@ if (
 
 ```tsx
 if (
-  !selectedAttribute &&
-  Number(eventType?.value) === EventType.Survey &&
-  Number(eventType?.value) === EventType.ElasticSurvey
+    !selectedAttribute &&
+    Number(eventType?.value) === EventType.Survey &&
+    Number(eventType?.value) === EventType.ElasticSurvey
 ) {
-  selectedAttribute = find(surveyData.current, { name: option.value })
+    selectedAttribute = find(surveyData.current, { name: option.value });
 }
 ```
 
@@ -457,9 +443,9 @@ isValid: !savedIntegration.cleanupPolicy?.enabled || !!savedIntegration.cleanupP
 
 ```ts
 integrationState.cleanUpForm = {
-  isValid: savedIntegration.cleanupPolicy?.enabled === false || true,
-  formValues: cleanupFormValues,
-}
+    isValid: savedIntegration.cleanupPolicy?.enabled === false || true,
+    formValues: cleanupFormValues,
+};
 ```
 
 > **Note:** cleanUpForm.isValid gates UI in Filters.tsx:150 (`invalid={cleanUpForm ? !cleanUpForm.isValid : false}`) and the Tabs.tsx review/save flow, so this only affects the edit path for already-persisted integrations, not the new-creation flow (governed by CleanupModule.onFormChange). Verify that CleanupPolicy.strategy is the sole required field when enabled — consult RepConnect.types.ts:4715 and hasConfiguredValues (CleanupModule.tsx:85-88) before finalizing the check.
@@ -534,29 +520,29 @@ new RegExp(`${Route.Actions}/agents}`), `${Route.Actions}/overview2}`, `${Route.
 
 ```tsx
 useEffect(() => {
-  const reqId = axios.interceptors.request.use(
-    (config) => {
-      // existing request handler body (unchanged)
-      return config
-    },
-    (error) => Promise.reject(error),
-  )
+    const reqId = axios.interceptors.request.use(
+        (config) => {
+            // existing request handler body (unchanged)
+            return config;
+        },
+        (error) => Promise.reject(error),
+    );
 
-  const resId = axios.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      // existing response error handler body (unchanged)
-      return Promise.reject(error)
-    },
-  )
+    const resId = axios.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            // existing response error handler body (unchanged)
+            return Promise.reject(error);
+        },
+    );
 
-  setInterceptorRegistered(true)
+    setInterceptorRegistered(true);
 
-  return () => {
-    axios.interceptors.request.eject(reqId)
-    axios.interceptors.response.eject(resId)
-  }
-}, [profile, dispatch, t, dispatchTicketReloadModal])
+    return () => {
+        axios.interceptors.request.eject(reqId);
+        axios.interceptors.response.eject(resId);
+    };
+}, [profile, dispatch, t, dispatchTicketReloadModal]);
 ```
 
 > **Evidence:**
@@ -584,15 +570,15 @@ useEffect(() => {
 
 ```tsx
 // inside addToList, within the if (Object.keys(listItem).length) block:
-newList.push(listItem)
-setList(newList) // was missing — update internal state
-setSelectedOption({})
+newList.push(listItem);
+setList(newList); // was missing — update internal state
+setSelectedOption({});
 if (onChange) {
-  onChange(newList)
+    onChange(newList);
 }
 
 // replace the in-place mutation at line 81:
-setInputValues(inputValues.map(() => '')) // immutable reset; do NOT do inputValues[i] = ''
+setInputValues(inputValues.map(() => '')); // immutable reset; do NOT do inputValues[i] = ''
 ```
 
 > **Evidence:**
@@ -614,20 +600,18 @@ const newList = [...list]; ... forEach(inputMetadata, (inputItem, inputIndex) =>
 > **Fix:** Sanitize each user-supplied array element with DOMPurify before interpolating into the HTML string. DOMPurify (dompurify ^2.4.2) is already a project dependency. Apply it to the individual value elements so the intentional structural markup (the `&lt;strong&gt;` wrapper and literal join tokens) is preserved while malicious payloads are stripped.
 
 ```tsx
-import DOMPurify from 'dompurify'
+import DOMPurify from 'dompurify';
 
 // Inside ActionPreview render:
 {
-  values.map((value: any, valueIndex) => (
-    <div
-      dangerouslySetInnerHTML={{
-        __html: `<strong>${value
-          .map((v: string) => DOMPurify.sanitize(v))
-          .join('</strong> as ')}`,
-      }}
-      key={`valueIndex-${valueIndex}`}
-    />
-  ))
+    values.map((value: any, valueIndex) => (
+        <div
+            dangerouslySetInnerHTML={{
+                __html: `<strong>${value.map((v: string) => DOMPurify.sanitize(v)).join('</strong> as ')}`,
+            }}
+            key={`valueIndex-${valueIndex}`}
+        />
+    ));
 }
 ```
 
@@ -650,17 +634,17 @@ values.map((value: any, valueIndex) => ( <div dangerouslySetInnerHTML={{ __html:
 > **Fix:** For each unguarded IIFE or async callback (after confirming it has no existing try/catch), wrap the body in try/catch/finally: dispatch ShowError in catch, and clear any manual loading flag in finally. Skip sites that are already guarded (e.g. DuplicateListing.tsx:117) to avoid double-handling. For sites using react-promise-tracker's trackPromise the finally block is not needed for spinner cleanup — add only the catch + ShowError. Apply the fix incrementally per site; do not attempt a single sweeping codemod across the entire codebase.
 
 ```tsx
-;(async () => {
-  try {
-    const result = await getStages(currentConversation.tenantID)
-    setStageOptions(result)
-    // ... other state updates
-  } catch (err) {
-    dispatch(ShowError('Failed to load stages.'))
-  } finally {
-    setLoading(false) // only needed where a manual loading flag exists
-  }
-})()
+(async () => {
+    try {
+        const result = await getStages(currentConversation.tenantID);
+        setStageOptions(result);
+        // ... other state updates
+    } catch (err) {
+        dispatch(ShowError('Failed to load stages.'));
+    } finally {
+        setLoading(false); // only needed where a manual loading flag exists
+    }
+})();
 ```
 
 > **Evidence:**
@@ -684,37 +668,37 @@ Stages.tsx:35 `(async () => { const result = await getStages(currentConversation
 ```ts
 // popup-window.tsx — illustrative named-ref + origin-check pattern
 export function popup(url: string, name: string): Promise<MessageEvent> {
-  return new Promise((resolve, reject) => {
-    const authWindow = window.open(url, name /* features */)
-    if (!authWindow) {
-      reject(new Error('popup blocked'))
-      return
-    }
+    return new Promise((resolve, reject) => {
+        const authWindow = window.open(url, name /* features */);
+        if (!authWindow) {
+            reject(new Error('popup blocked'));
+            return;
+        }
 
-    const expectedOrigin = new URL(url).origin
+        const expectedOrigin = new URL(url).origin;
 
-    function onMessage(e: MessageEvent) {
-      if (e.origin !== expectedOrigin) return
-      if (!authWindow || e.data?.app !== 'r4e-ui2') return
-      cleanup()
-      resolve(e)
-    }
+        function onMessage(e: MessageEvent) {
+            if (e.origin !== expectedOrigin) return;
+            if (!authWindow || e.data?.app !== 'r4e-ui2') return;
+            cleanup();
+            resolve(e);
+        }
 
-    function cleanup() {
-      window.removeEventListener('message', onMessage, false)
-    }
+        function cleanup() {
+            window.removeEventListener('message', onMessage, false);
+        }
 
-    window.addEventListener('message', onMessage, false)
+        window.addEventListener('message', onMessage, false);
 
-    // also clean up if the popup is closed without posting a message
-    const poll = setInterval(() => {
-      if (authWindow.closed) {
-        clearInterval(poll)
-        cleanup()
-        reject(new Error('popup closed'))
-      }
-    }, 500)
-  })
+        // also clean up if the popup is closed without posting a message
+        const poll = setInterval(() => {
+            if (authWindow.closed) {
+                clearInterval(poll);
+                cleanup();
+                reject(new Error('popup closed'));
+            }
+        }, 500);
+    });
 }
 ```
 
@@ -772,23 +756,17 @@ return `r4e-inbox-conversations-filter-${profile.user.id}-${profile.user.locale}
 > **Fix:** Replace state.activeQuestionId with state.locationUid inside setLocationUid so the reducer writes the correct field.
 
 ```ts
-export const setLocationUid = (
-  state: SurveyPlanState,
-  action: PayloadAction<string | null>,
-) => {
-  state.locationUid = action.payload
-}
+export const setLocationUid = (state: SurveyPlanState, action: PayloadAction<string | null>) => {
+    state.locationUid = action.payload;
+};
 ```
 
 > **Evidence:**
 
 ```ts
-export const setLocationUid = (
-  state: SurveyPlanState,
-  action: PayloadAction<string | null>,
-) => {
-  state.activeQuestionId = action.payload
-}
+export const setLocationUid = (state: SurveyPlanState, action: PayloadAction<string | null>) => {
+    state.activeQuestionId = action.payload;
+};
 ```
 
 > **Note:** No callsite currently dispatches setLocationUid, so runtime blast radius today is zero. The fix carries no regression risk, but the selector selectLocationUid (SurveyPlanSlice.ts:142) will only return meaningful values once the action is actually dispatched.
@@ -808,18 +786,16 @@ export const setLocationUid = (
 // if (integrationType === IntegrationType.SurveyExport) {
 //     automationReviewDetails.filter((details) => details.name === t('FILE_DETAILS'));
 // }
-return automationReviewDetails
+return automationReviewDetails;
 ```
 
 > **Evidence:**
 
 ```ts
 if (integrationType === IntegrationType.SurveyExport) {
-  automationReviewDetails.filter(
-    (details) => details.name === t('FILE_DETAILS'),
-  )
+    automationReviewDetails.filter((details) => details.name === t('FILE_DETAILS'));
 }
-return automationReviewDetails
+return automationReviewDetails;
 ```
 
 > **Note:** The function's return value is consumed at hooks/useReview.tsx:143 and rendered as the automation review card list. Confirm with the PR author (p04singh, RC-1685) before introducing any assign-back variant — doing so would remove the SFTP_DETAILS card from the SurveyExport review page, a visible behavior change not supported by the commit history.
@@ -863,48 +839,43 @@ getTransformedValue switch (line 753): UPPER_CASE→toUpperCase(); LOWER_CASE→
 
 ```tsx
 // Extracted to module level — stable identity, hooks remain valid
-const ColumnHeaderCell = ({
-  row: { original },
-  value,
-}: CellProps<SurveyMapping>): ReactNode => {
-  const surveyId = original.surveyId
-  const [text, setText] = useState(getTextFromTextRef(surveyId) ?? value)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+const ColumnHeaderCell = ({ row: { original }, value }: CellProps<SurveyMapping>): ReactNode => {
+    const surveyId = original.surveyId;
+    const [text, setText] = useState(getTextFromTextRef(surveyId) ?? value);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    setText(getTextFromTextRef(surveyId) ?? value)
-  }, [value, surveyId])
+    useEffect(() => {
+        setText(getTextFromTextRef(surveyId) ?? value);
+    }, [value, surveyId]);
 
-  useEffect(() => {
-    // one-time setup …
-  }, [])
+    useEffect(() => {
+        // one-time setup …
+    }, []);
 
-  // … render …
-}
+    // … render …
+};
 
-const IncludeInExportCell = ({
-  row: { original },
-}: CellProps<SurveyMapping>): ReactNode => {
-  const [checked, setChecked] = useState(/* … */)
-  // … render …
-}
+const IncludeInExportCell = ({ row: { original } }: CellProps<SurveyMapping>): ReactNode => {
+    const [checked, setChecked] = useState(/* … */);
+    // … render …
+};
 
 // Inside mappingColumns useMemo — reference by name, not inline
 const mappingColumns = useMemo<Column<SurveyMapping>[]>(
-  () => [
-    {
-      // …
-      Cell: ColumnHeaderCell,
-    },
-    {
-      // …
-      Cell: IncludeInExportCell,
-    },
-  ],
-  [
-    /* pruned deps */
-  ],
-)
+    () => [
+        {
+            // …
+            Cell: ColumnHeaderCell,
+        },
+        {
+            // …
+            Cell: IncludeInExportCell,
+        },
+    ],
+    [
+        /* pruned deps */
+    ],
+);
 ```
 
 > **Evidence:**
@@ -950,10 +921,7 @@ initialSortByOrder={TableDefaultConfigs.pageSize}  // all 3 sites; pageSize is 1
 > **Fix:** Replace the bare dereference at L271 with optional chaining to match the rest of the function: `const allowSystemUser = auth.allowSystemUser && localProfile?.isImpersonated && localProfile?.user.system;`
 
 ```tsx
-const allowSystemUser =
-  auth.allowSystemUser &&
-  localProfile?.isImpersonated &&
-  localProfile?.user.system
+const allowSystemUser = auth.allowSystemUser && localProfile?.isImpersonated && localProfile?.user.system;
 ```
 
 > **Evidence:**
@@ -999,17 +967,17 @@ Line 606: `const withSanitizeTextArg = addSantizeTextArg(searchCommentHistoriesR
 > **Fix:** Change line 378 to use `currentContext!.agencyId` so the variable's value matches its name and aligns with the accept handler at line 349.
 
 ```tsx
-const tID = currentContext!.tenantId
-const aID = currentContext!.agencyId
-const promise = unMatchMatcherResultV2(aID, tID, args)
+const tID = currentContext!.tenantId;
+const aID = currentContext!.agencyId;
+const promise = unMatchMatcherResultV2(aID, tID, args);
 ```
 
 > **Evidence:**
 
 ```tsx
-const tID = currentContext!.tenantId
-const aID = currentContext!.tenantId // aID assigned tenantId, not agencyId
-const promise = unMatchMatcherResultV2(aID, tID, args)
+const tID = currentContext!.tenantId;
+const aID = currentContext!.tenantId; // aID assigned tenantId, not agencyId
+const promise = unMatchMatcherResultV2(aID, tID, args);
 // contrast accept handler line 349: const aID = currentContext!.agencyId;
 ```
 
@@ -1049,11 +1017,11 @@ connectorType={ConnectorType.DR_CHRONO}
 
 ```tsx
 // Line 231 — store the raw key, not the translated string
-setErrorMessage(foldersResponse.errorMessage || undefined)
+setErrorMessage(foldersResponse.errorMessage || undefined);
 
 // Line 256 — single translation at render (unchanged)
 {
-  !!errorMessage && t(errorMessage)
+    !!errorMessage && t(errorMessage);
 }
 ```
 
@@ -1078,13 +1046,8 @@ API returns `errorMessage: SftpErrorType` — a raw key enum (ENOTFOUND/ECONNREF
 > **Fix:** Change `type="sumbit"` to `type="submit"` on the alt-save Button at line 605.
 
 ```tsx
-<Button
-  variant='secondary'
-  type='submit'
-  onClick={(): void => setIsAltSave(true)}
-  disabled={isSaveDisabled || false}
->
-  {altSaveLabel || t('SAVE')}
+<Button variant="secondary" type="submit" onClick={(): void => setIsAltSave(true)} disabled={isSaveDisabled || false}>
+    {altSaveLabel || t('SAVE')}
 </Button>
 ```
 
@@ -1113,7 +1076,7 @@ API returns `errorMessage: SftpErrorType` — a raw key enum (ENOTFOUND/ECONNREF
 > **Fix:** Replace the template literal so the curly braces are removed: `const viewBox = \`0 0 ${sqDim} ${sqDim}\`;`. The resulting value (e.g. `0 0 150 150`) is a valid SVG viewBox that is an identity mapping to the existing explicit width/height, so visual output is unchanged.
 
 ```tsx
-const viewBox = `0 0 ${sqDim} ${sqDim}`
+const viewBox = `0 0 ${sqDim} ${sqDim}`;
 ```
 
 > **Evidence:**
@@ -1136,7 +1099,7 @@ Line 66: `const viewBox = \`{0 0 ${sqDim} ${sqDim}}\`;` — the `{` and `}` are 
 
 ```tsx
 // TicketsListView.tsx:51  (same change applies to TicketList/index.tsx:28)
-const count = useSelector((state: any) => state?.count ?? 0)
+const count = useSelector((state: any) => state?.count ?? 0);
 ```
 
 > **Evidence:**
@@ -1169,9 +1132,9 @@ Store declaration: `count: number` (actions-store.ts:57), initialised `count: 0`
 ```ts
 // In RepConnect.types.ts — merge the two extra props into the existing SampleData interface
 export interface SampleData {
-  // ... existing fields ...
-  enableSmartWrap?: boolean
-  customTooltipClassName?: string
+    // ... existing fields ...
+    enableSmartWrap?: boolean;
+    customTooltipClassName?: string;
 }
 ```
 
@@ -1200,44 +1163,44 @@ Integrations2.types.ts:114 `GOOGLE_DATA_STUDIO = 15,` | RepConnect.types.ts:159 
 // Before (broken — new debounce each render):
 //   onUpdate={debounce(handleUpdate, 300)}
 // After:
-const debouncedHandleUpdate = useDebouncedFunction(handleUpdate, 300)
+const debouncedHandleUpdate = useDebouncedFunction(handleUpdate, 300);
 // ...
-;<SomeComponent onUpdate={debouncedHandleUpdate} />
+<SomeComponent onUpdate={debouncedHandleUpdate} />;
 
 // Pattern B — component-body const (surveys / roles / etc.)
 // Before (broken):
 //   const onStateChangeHandler = debounce((field, value) => { … }, 500);
 // After (include all closed-over props in deps to avoid stale closures):
 const onStateChangeHandler = useMemo(
-  () =>
-    debounce((field: string, value: unknown) => {
-      /* handler body */
-    }, 500),
-  [title, description, widget, onStateChange], // all captured props/state
-)
+    () =>
+        debounce((field: string, value: unknown) => {
+            /* handler body */
+        }, 500),
+    [title, description, widget, onStateChange], // all captured props/state
+);
 useEffect(
-  () => () => {
-    onStateChangeHandler.cancel()
-  },
-  [onStateChangeHandler],
-)
+    () => () => {
+        onStateChangeHandler.cancel();
+    },
+    [onStateChangeHandler],
+);
 
 // Pattern C — react-select loadOptions (returns Promise; canonical hook incompatible)
 const debouncedSearch = useMemo(
-  () =>
-    debounce((inputValue: string, callback: (opts: Option[]) => void) => {
-      searchUsers(inputValue).then(callback)
-    }, 300),
-  [], // searchUsers must be stable (useCallback) or included here
-)
+    () =>
+        debounce((inputValue: string, callback: (opts: Option[]) => void) => {
+            searchUsers(inputValue).then(callback);
+        }, 300),
+    [], // searchUsers must be stable (useCallback) or included here
+);
 useEffect(
-  () => () => {
-    debouncedSearch.cancel()
-  },
-  [debouncedSearch],
-)
+    () => () => {
+        debouncedSearch.cancel();
+    },
+    [debouncedSearch],
+);
 // ...
-;<AsyncSelect loadOptions={debouncedSearch} />
+<AsyncSelect loadOptions={debouncedSearch} />;
 ```
 
 > **Evidence:**
@@ -1260,106 +1223,93 @@ admin/users/users/Users.tsx:257 `onUpdate={debounce(handleUpdate, 300)}`; ticket
 
 ```tsx
 // src/tickets/filters/common/SimpleSelectFilter.tsx
-import React, { useMemo } from 'react'
-import SelectedFilter from '../../../common/filters/filter-bar/selected-filter/SelectedFilter'
-import { DataType, WidgetType } from '../../types'
+import React, { useMemo } from 'react';
+import SelectedFilter from '../../../common/filters/filter-bar/selected-filter/SelectedFilter';
+import { DataType, WidgetType } from '../../types';
 
 interface SimpleSelectFilterProps {
-  objectFieldName: string
-  name: string
-  label: string
-  values: unknown[]
-  onChange: (filter: unknown) => void
+    objectFieldName: string;
+    name: string;
+    label: string;
+    values: unknown[];
+    onChange: (filter: unknown) => void;
 }
 
-const SimpleSelectFilter: React.FC<SimpleSelectFilterProps> = ({
-  objectFieldName,
-  name,
-  label,
-  values,
-  onChange,
-}) => {
-  const filterDefinition = useMemo(
-    () => ({
-      objectFieldName,
-      name,
-      label,
-      group: '',
-      dataType: DataType.List,
-      widgetType: WidgetType.MultiSelect,
-      order: 1,
-      groupOrder: 0,
-      values,
-      valuesCount: 0,
-      selected: true,
-      locked: true,
-    }),
-    [objectFieldName, name, label, values],
-  )
+const SimpleSelectFilter: React.FC<SimpleSelectFilterProps> = ({ objectFieldName, name, label, values, onChange }) => {
+    const filterDefinition = useMemo(
+        () => ({
+            objectFieldName,
+            name,
+            label,
+            group: '',
+            dataType: DataType.List,
+            widgetType: WidgetType.MultiSelect,
+            order: 1,
+            groupOrder: 0,
+            values,
+            valuesCount: 0,
+            selected: true,
+            locked: true,
+        }),
+        [objectFieldName, name, label, values],
+    );
 
-  return (
-    <div className='r4e-app'>
-      <SelectedFilter
-        filter={filterDefinition}
-        onChange={onChange}
-        onRemove={() => {
-          /* component requires it */
-        }}
-      />
-    </div>
-  )
-}
+    return (
+        <div className="r4e-app">
+            <SelectedFilter
+                filter={filterDefinition}
+                onChange={onChange}
+                onRemove={() => {
+                    /* component requires it */
+                }}
+            />
+        </div>
+    );
+};
 
-export default SimpleSelectFilter
+export default SimpleSelectFilter;
 
 // src/tickets/filters/common/useFilterOptions.ts
-import { useEffect, useRef } from 'react'
-import { useLocalStorage } from '../../../hooks/useLocalStorage'
-import { trackPromise } from 'react-promise-tracker'
+import { useEffect, useRef } from 'react';
+import { useLocalStorage } from '../../../hooks/useLocalStorage';
+import { trackPromise } from 'react-promise-tracker';
 
 type FetcherMode =
-  | {
-      kind: 'cached'
-      storageKey: string
-      keySuffix?: string
-      fetcher: () => Promise<unknown[]>
-      toOptions: (raw: unknown[]) => unknown[]
-    }
-  | {
-      kind: 'uncached'
-      fetcher: () => Promise<unknown[]>
-      toOptions: (raw: unknown[]) => unknown[]
-    }
-  | { kind: 'sync'; builder: () => unknown[] }
-
-export function useFilterOptions(
-  mode: FetcherMode,
-  setOptions: (opts: unknown[]) => void,
-) {
-  const isFetchingRef = useRef<string | false>(false)
-
-  useEffect(() => {
-    if (mode.kind === 'sync') {
-      setOptions(mode.builder())
-      return
-    }
-    if (mode.kind === 'cached') {
-      const stored = /* read from storage */ null as unknown[] | null
-      if (stored && stored.length) {
-        setOptions(mode.toOptions(stored))
-        return
+    | {
+          kind: 'cached';
+          storageKey: string;
+          keySuffix?: string;
+          fetcher: () => Promise<unknown[]>;
+          toOptions: (raw: unknown[]) => unknown[];
       }
-    }
-    const fetchKey = mode.kind === 'cached' ? mode.storageKey : 'uncached'
-    if (isFetchingRef.current === fetchKey) return
-    isFetchingRef.current = fetchKey
-    ;(async () => {
-      const raw = await trackPromise(mode.fetcher())
-      setOptions(mode.toOptions(raw))
-      isFetchingRef.current = false
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    | { kind: 'uncached'; fetcher: () => Promise<unknown[]>; toOptions: (raw: unknown[]) => unknown[] }
+    | { kind: 'sync'; builder: () => unknown[] };
+
+export function useFilterOptions(mode: FetcherMode, setOptions: (opts: unknown[]) => void) {
+    const isFetchingRef = useRef<string | false>(false);
+
+    useEffect(() => {
+        if (mode.kind === 'sync') {
+            setOptions(mode.builder());
+            return;
+        }
+        if (mode.kind === 'cached') {
+            const stored = /* read from storage */ null as unknown[] | null;
+            if (stored && stored.length) {
+                setOptions(mode.toOptions(stored));
+                return;
+            }
+        }
+        const fetchKey = mode.kind === 'cached' ? mode.storageKey : 'uncached';
+        if (isFetchingRef.current === fetchKey) return;
+        isFetchingRef.current = fetchKey;
+        (async () => {
+            const raw = await trackPromise(mode.fetcher());
+            setOptions(mode.toOptions(raw));
+            isFetchingRef.current = false;
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 }
 ```
 
@@ -1428,32 +1378,29 @@ LocalStorage.ts:37-39 `if (data) { return JSON.parse(data); }` — central util 
 
 ```ts
 // src/common/hooks/useAsyncAction.ts
-import { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react';
 
-type OnError = (err: unknown) => void
+type OnError = (err: unknown) => void;
 
 interface UseAsyncActionOptions {
-  onError?: OnError
+    onError?: OnError;
 }
 
-export function useAsyncAction<T>(
-  fn: () => Promise<T>,
-  { onError }: UseAsyncActionOptions = {},
-) {
-  const [loading, setLoading] = useState(false)
+export function useAsyncAction<T>(fn: () => Promise<T>, { onError }: UseAsyncActionOptions = {}) {
+    const [loading, setLoading] = useState(false);
 
-  const run = useCallback(async () => {
-    setLoading(true)
-    try {
-      return await fn()
-    } catch (err) {
-      onError?.(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [fn, onError])
+    const run = useCallback(async () => {
+        setLoading(true);
+        try {
+            return await fn();
+        } catch (err) {
+            onError?.(err);
+        } finally {
+            setLoading(false);
+        }
+    }, [fn, onError]);
 
-  return { run, loading }
+    return { run, loading };
 }
 ```
 
@@ -1480,21 +1427,16 @@ DuplicateListing.tsx:116 `useEffect(() => { (async () => { try { ... } catch (er
 ```ts
 // src/common/util/dateUtil.ts  (new shared location)
 export function formatDateTime(dt: number): string {
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }
-  const timeOptions: Intl.DateTimeFormatOptions = {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }
-  return `${new Date(dt).toLocaleDateString('en-US', options)} ${new Date(dt).toLocaleTimeString('en-US', timeOptions)}`
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+    const timeOptions: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+    return `${new Date(dt).toLocaleDateString('en-US', options)} ${new Date(dt).toLocaleTimeString(
+        'en-US',
+        timeOptions,
+    )}`;
 }
 
 // In each of the 12 inline-declaring components, replace the local declaration with:
-import { formatDateTime } from 'src/common/util/dateUtil'
+import { formatDateTime } from 'src/common/util/dateUtil';
 ```
 
 > **Evidence:**
@@ -1519,35 +1461,23 @@ Variant B inline copy (ActionPlanNotes.tsx:38, tickets/ticket/Notes.tsx:53, etc)
 
 ```tsx
 // Option A: promote existing surveys NoData or create in e.g. src/reports/common/components/no-data/NoData.tsx
-import React from 'react'
-import { useTranslation } from 'react-i18next'
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface NoDataProps {
-  translationKey?: string
-  /** renders the block inside <div className="no-data-container"> when true (default) */
-  withContainer?: boolean
-  className?: string
+    translationKey?: string;
+    /** renders the block inside <div className="no-data-container"> when true (default) */
+    withContainer?: boolean;
+    className?: string;
 }
 
-const NoData: React.FC<NoDataProps> = ({
-  translationKey = 'NO_DATA_TO_DISPLAY',
-  withContainer = true,
-  className,
-}) => {
-  const { t } = useTranslation()
-  const inner = (
-    <div className={`no-data${className ? ` ${className}` : ''}`}>
-      {t(translationKey)}
-    </div>
-  )
-  return withContainer ? (
-    <div className='no-data-container'>{inner}</div>
-  ) : (
-    inner
-  )
-}
+const NoData: React.FC<NoDataProps> = ({ translationKey = 'NO_DATA_TO_DISPLAY', withContainer = true, className }) => {
+    const { t } = useTranslation();
+    const inner = <div className={`no-data${className ? ` ${className}` : ''}`}>{t(translationKey)}</div>;
+    return withContainer ? <div className="no-data-container">{inner}</div> : inner;
+};
 
-export default NoData
+export default NoData;
 ```
 
 > **Evidence:**
@@ -1573,19 +1503,19 @@ Canonical block: `<div className="no-data-container">\n  <div className="no-data
 ```tsx
 // src/common/confirm-modal/ConfirmModal.tsx — extended props interface
 export interface ConfirmModalProps {
-  title: string
-  body: string
-  confirmButtonLabel: string
-  cancelButtonLabel?: string
-  size?: ModalProps['size']
-  cancel?: () => void
-  confirm?: () => void
-  /** Variant for the confirm button. Defaults to ButtonVariant.Primary. */
-  confirmVariant?: ButtonVariant
-  /** Optional icon class to render before the body text, e.g. "icon-exclamation-triangle". */
-  icon?: string
-  /** When true, shows an Overlay over the modal body (async delete in progress). */
-  busy?: boolean
+    title: string;
+    body: string;
+    confirmButtonLabel: string;
+    cancelButtonLabel?: string;
+    size?: ModalProps['size'];
+    cancel?: () => void;
+    confirm?: () => void;
+    /** Variant for the confirm button. Defaults to ButtonVariant.Primary. */
+    confirmVariant?: ButtonVariant;
+    /** Optional icon class to render before the body text, e.g. "icon-exclamation-triangle". */
+    icon?: string;
+    /** When true, shows an Overlay over the modal body (async delete in progress). */
+    busy?: boolean;
 }
 
 // Inside render, replace the hardcoded confirm button variant and add icon + Overlay:
@@ -1621,36 +1551,33 @@ Shared ConfirmModal Props{title,body,confirmButtonLabel,cancelButtonLabel?,size?
 
 ```ts
 // src/common/hooks/useClickOutside.ts
-import { RefObject, useEffect } from 'react'
+import { RefObject, useEffect } from 'react';
 
-export function useClickOutside<T extends HTMLElement>(
-  ref: RefObject<T>,
-  handler: () => void,
-): void {
-  useEffect(() => {
-    function handleMouseDown(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        handler()
-      }
-    }
-    document.addEventListener('mousedown', handleMouseDown)
-    return () => document.removeEventListener('mousedown', handleMouseDown)
-  }, [ref, handler])
+export function useClickOutside<T extends HTMLElement>(ref: RefObject<T>, handler: () => void): void {
+    useEffect(() => {
+        function handleMouseDown(event: MouseEvent) {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                handler();
+            }
+        }
+        document.addEventListener('mousedown', handleMouseDown);
+        return () => document.removeEventListener('mousedown', handleMouseDown);
+    }, [ref, handler]);
 }
 
 // src/common/hooks/useEscapeKey.ts
-import { useEffect } from 'react'
+import { useEffect } from 'react';
 
 export function useEscapeKey(handler: () => void): void {
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        handler()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [handler])
+    useEffect(() => {
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === 'Escape') {
+                handler();
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [handler]);
 }
 ```
 
@@ -1676,34 +1603,31 @@ CredentialPages.tsx:116 `document.addEventListener('click', handleClickOutside);
 
 ```ts
 // src/common/util/ErrorUtil.ts
-export const getErrorMsg = (
-  error: any,
-  field: 'detail' | 'message' = 'detail',
-): string => {
-  let errorMessage = error.response?.data?.error?.[field]
-  if (errorMessage && errorMessage.constructor.name === 'Array') {
-    errorMessage = errorMessage[0].message
-  }
-  if (!errorMessage) {
-    errorMessage = error.message
-  }
-  return errorMessage
-}
+export const getErrorMsg = (error: any, field: 'detail' | 'message' = 'detail'): string => {
+    let errorMessage = error.response?.data?.error?.[field];
+    if (errorMessage && errorMessage.constructor.name === 'Array') {
+        errorMessage = errorMessage[0].message;
+    }
+    if (!errorMessage) {
+        errorMessage = error.message;
+    }
+    return errorMessage;
+};
 ```
 
 > **Evidence:**
 
 ```ts
 export const getErrorMsg = (error: any): string => {
-  let errorMessage = error.response?.data?.error?.detail
-  if (errorMessage && errorMessage.constructor.name === 'Array') {
-    errorMessage = errorMessage[0].message
-  }
-  if (!errorMessage) {
-    errorMessage = error.message
-  }
-  return errorMessage
-}
+    let errorMessage = error.response?.data?.error?.detail;
+    if (errorMessage && errorMessage.constructor.name === 'Array') {
+        errorMessage = errorMessage[0].message;
+    }
+    if (!errorMessage) {
+        errorMessage = error.message;
+    }
+    return errorMessage;
+};
 ```
 
 > **Note:** UrlRedirectUtil.tsx reads `.error?.message` (not `.detail`) — a direct drop-in replacement with the detail-only signature would silently change which backend field that screen reads. Passing `field: 'message'` at the url-redirect call sites (or keeping a thin local wrapper) is required to preserve current behaviour. The destination directory `src/common/util/` already exists.
@@ -1722,7 +1646,7 @@ export const getErrorMsg = (error: any): string => {
 
 ```ts
 // src/tickets/util/Util.ts — replace local calcDueDateTime impl with re-export
-export { calcDueDateTime } from '../util/reusable-functions/due-date.utils'
+export { calcDueDateTime } from '../util/reusable-functions/due-date.utils';
 ```
 
 > **Evidence:**
@@ -1747,15 +1671,15 @@ Util.ts:9 `export const calcDueDateTime = ({ dueInUnit, dueInValue })` (uses lod
 
 ```ts
 // mrr-dashboard.utils.ts already provides this — import and use it directly
-import { getMRRUtilisationColorClass } from 'src/tickets/util/reusable-functions/mrr-dashboard.utils'
+import { getMRRUtilisationColorClass } from 'src/tickets/util/reusable-functions/mrr-dashboard.utils';
 
 // Replace getColorbyValue call sites:
 // Before: getColorbyValue(utilisationPct)
 // After:
-getMRRUtilisationColorClass(utilisationPct)
+getMRRUtilisationColorClass(utilisationPct);
 
 // In ActionMRRDashboard.tsx:368, fix the closingReason to use the translated form:
-closingReason: t('MRR_LIMIT_EXCEEDED_REASON')
+closingReason: t('MRR_LIMIT_EXCEEDED_REASON');
 ```
 
 > **Evidence:**
@@ -1780,19 +1704,19 @@ ActionMRRDashboard.tsx:384 `const getColorbyValue = (value: number): string => {
 // tickets/util/reusable-functions/agent-metrics.utils.ts
 // Single source of truth for role ObjectIDs (already exists — remove duplicates elsewhere)
 export const AGENT_ROLE_IDS = {
-  ReviewAdmin: '61b8cf913453c26ee055513f',
-  BLAdmin: '61b8d07b3453c26ee0555140',
-  ReviewAgent: '61b8d16adae66009a43873da',
-  BLAgent: '61b8d107dae66009a43873d8',
-} as const
+    ReviewAdmin: '61b8cf913453c26ee055513f',
+    BLAdmin: '61b8d07b3453c26ee0555140',
+    ReviewAgent: '61b8d16adae66009a43873da',
+    BLAgent: '61b8d107dae66009a43873d8',
+} as const;
 
 // tickets/slice/ticketConstants.ts  (new shared file)
-export const OPEN_STAGE_ID = '5d4862d75b3068d063a3e712'
-export const CLOSED_STAGE_ID = '5d48656dbeee8a258cdcb7b1'
-export const UNASSIGNED_AGENCY_ID = -1
+export const OPEN_STAGE_ID = '5d4862d75b3068d063a3e712';
+export const CLOSED_STAGE_ID = '5d48656dbeee8a258cdcb7b1';
+export const UNASSIGNED_AGENCY_ID = -1;
 
 // directory/common/util/CommonConstants.ts  (existing file, replace inline 11743)
-export const GM_TENANT_ID = 11743
+export const GM_TENANT_ID = 11743;
 ```
 
 > **Evidence:**
@@ -1818,24 +1742,24 @@ Role IDs duplicated 3×: ActionAgents.tsx:67 `const ReviewAdmin = '61b8cf913453c
 ```ts
 // In admin/integrations2/RepConnect.types.ts — add this export:
 export interface StepperProps {
-  currentTab: TabType
-  onBack: () => void
-  mode: WizardMode
-  onTabChange: (tab: TabType) => void
-  saveAsDraft: () => Promise<void>
-  saveAndEnable: () => Promise<void>
-  onFinishStep: () => Promise<void>
+    currentTab: TabType;
+    onBack: () => void;
+    mode: WizardMode;
+    onTabChange: (tab: TabType) => void;
+    saveAsDraft: () => Promise<void>;
+    saveAndEnable: () => Promise<void>;
+    onFinishStep: () => Promise<void>;
 }
 
 // In each of the 22 identical steppers — replace the local interface with:
-import { StepperProps } from 'admin/integrations2/RepConnect.types'
-type Props = StepperProps
+import { StepperProps } from 'admin/integrations2/RepConnect.types';
+type Props = StepperProps;
 
 // In WorkatoRequest.tsx — replace with:
-import { StepperProps } from 'admin/integrations2/RepConnect.types'
+import { StepperProps } from 'admin/integrations2/RepConnect.types';
 interface Props extends StepperProps {
-  connectorType: ConnectorType
-  integrationType: IntegrationType
+    connectorType: ConnectorType;
+    integrationType: IntegrationType;
 }
 ```
 
@@ -1843,13 +1767,13 @@ interface Props extends StepperProps {
 
 ```ts
 interface Props {
-  currentTab: TabType
-  onBack: () => void
-  mode: WizardMode
-  onTabChange: (tab: TabType) => void
-  saveAsDraft: () => Promise<void>
-  saveAndEnable: () => Promise<void>
-  onFinishStep: () => Promise<void>
+    currentTab: TabType;
+    onBack: () => void;
+    mode: WizardMode;
+    onTabChange: (tab: TabType) => void;
+    saveAsDraft: () => Promise<void>;
+    saveAndEnable: () => Promise<void>;
+    onFinishStep: () => Promise<void>;
 }
 ```
 
@@ -1948,16 +1872,16 @@ All 4 files contain a `switch (selectedReviewsFilter?.value)` + `switch (selecte
  * names produce first + last initial.  Empty string returns ''.
  */
 export const getDisplayInitials = (fullName: string): string => {
-  const trimmed = fullName.trim()
-  if (!trimmed) return ''
-  const parts = trimmed.split(' ')
-  const first = parts[0]
-  if (parts.length === 1) {
-    return (first.charAt(0) + first.charAt(1)).toUpperCase()
-  }
-  const last = parts[parts.length - 1]
-  return (first.charAt(0) + last.charAt(0)).toUpperCase()
-}
+    const trimmed = fullName.trim();
+    if (!trimmed) return '';
+    const parts = trimmed.split(' ');
+    const first = parts[0];
+    if (parts.length === 1) {
+        return (first.charAt(0) + first.charAt(1)).toUpperCase();
+    }
+    const last = parts[parts.length - 1];
+    return (first.charAt(0) + last.charAt(0)).toUpperCase();
+};
 
 // --- usage pattern in each component (replace the local getInitials body) ---
 // import { getDisplayInitials } from 'tickets/actions2/common/tenant-util';
@@ -1988,10 +1912,10 @@ Shared (tenant-util.ts:28): `export const getInitials = (fullName: string) => { 
 
 ```ts
 // In each of the four in-component files, remove the local declaration and add:
-import { useQuery } from 'core/util/Hook'
+import { useQuery } from 'core/util/Hook';
 
 // For surveys-public/util/UrlSearchParams.ts, either re-export:
-export { useQuery } from 'core/util/Hook'
+export { useQuery } from 'core/util/Hook';
 // …or update the 5 consumers (SurveyStart, SurveyRun, ButtonNextQuestion,
 // NotFoundRouteWithDemo, EnsureQSPs) to import from 'core/util/Hook' directly.
 ```
@@ -2001,17 +1925,17 @@ export { useQuery } from 'core/util/Hook'
 ```ts
 // surveys-public/util/UrlSearchParams.ts:4
 export function useQuery(): URLSearchParams {
-  return new URLSearchParams(useLocation().search)
+    return new URLSearchParams(useLocation().search);
 }
 // ProfileDetail.tsx:43
 const useQuery = (): URLSearchParams => {
-  const { search } = useLocation()
-  return useMemo(() => new URLSearchParams(search), [search])
-}
+    const { search } = useLocation();
+    return useMemo(() => new URLSearchParams(search), [search]);
+};
 // ResultsDeepLinkRoute.tsx:34 / FlexReportPrint.tsx:22 / ReportPrint.tsx:17
 const useQuery = (): URLSearchParams => {
-  return new URLSearchParams(useLocation().search)
-}
+    return new URLSearchParams(useLocation().search);
+};
 ```
 
 > **Note:** Adopting the memoized canonical version changes referential identity of the returned URLSearchParams object. This is safe: in all three non-memoized files (ResultsDeepLinkRoute, ReportPrint, FlexReportPrint) the query object is only read via query.get(...) inside effect/render bodies and never appears in a hook dependency array, so there is no effect-cadence regression. The surveys-public re-export path is the lowest-churn option for its five consumers.
@@ -2030,8 +1954,7 @@ const useQuery = (): URLSearchParams => {
 
 ```ts
 // src/core/util/Util.ts  (add alongside existing helpers)
-export const generateId = (prefix = ''): string =>
-  `${prefix}${Math.random().toString(36).slice(2, 11)}`
+export const generateId = (prefix = ''): string => `${prefix}${Math.random().toString(36).slice(2, 11)}`;
 ```
 
 > **Evidence:**
@@ -2080,16 +2003,10 @@ export const notificationHistories: NotificationHistory[] = [ ... ]; // 228 line
 > **Evidence:**
 
 ```ts
-export const saveCredential = async (
-  tenantId: number,
-  credential: Credential,
-): Promise<string> => {
-  const response: AxiosResponse = await axios.post(
-    `/api/tenants/${tenantId}/credentials`,
-    credential,
-  )
-  return response.data
-}
+export const saveCredential = async (tenantId: number, credential: Credential): Promise<string> => {
+    const response: AxiosResponse = await axios.post(`/api/tenants/${tenantId}/credentials`, credential);
+    return response.data;
+};
 ```
 
 > **Note:** Verified by grep: zero source files import `integrations2/api/Yardi`. The only references are in audit/plan markdown files. No barrel `index.ts` in the `api/` directory re-exports this file.
@@ -2172,8 +2089,8 @@ export const exampleJson = { id: '67a298288fa00a626a948ac9', agencyID: 1, tenant
 
 // If keeping for dev only, guard each registration instead:
 if (process.env.NODE_ENV === 'development') {
-  // screenshots: add Type.Test to RendererMapper here
-  // social: render the /test route here
+    // screenshots: add Type.Test to RendererMapper here
+    // social: render the /test route here
 }
 ```
 
@@ -2258,7 +2175,7 @@ export const SurveyResultSuspect: FunctionComponent<Props> = ({ className, suspe
 > **Evidence:**
 
 ```tsx
-L338: const [showInternalEmailer, setShowInternalEmailer] = useState(false) // never set true on a live path. L545-553 (commented): {/* {!profile.isAgencyUser ? (<Dropdown.Item href="" onClick={(): void => setShowInternalEmailer(true)}>... */} L573 (live): <InternalEmailer show={showInternalEmailer} onClose={(): void => setShowInternalEmailer(false)} />
+L338: const [showInternalEmailer, setShowInternalEmailer] = useState(false); // never set true on a live path. L545-553 (commented): {/* {!profile.isAgencyUser ? (<Dropdown.Item href="" onClick={(): void => setShowInternalEmailer(true)}>... */} L573 (live): <InternalEmailer show={showInternalEmailer} onClose={(): void => setShowInternalEmailer(false)} />
 ```
 
 > **Note:** TopNav.tsx is the sole importer of InternalEmailer in all of src, so removing the wiring orphans the entire internal-emailer/ component directory — include that directory deletion in the same PR. Confirm CORE-2990 is closed before merging.
@@ -2350,16 +2267,16 @@ rg "SelectOneOptions" --glob '!**/select-one-options/**' across all of src retur
 
 ```ts
 export enum AccountType {
-  Current = 1,
-  Demo = 2,
-  Delinquent = 3,
-  Benchmark = 4,
-  Competitor = 5,
-  FTC = 6,
-  QA = 7,
-  FreeTrial = 8,
-  Sandbox = 9,
-  Competitor2 = 10,
+    Current = 1,
+    Demo = 2,
+    Delinquent = 3,
+    Benchmark = 4,
+    Competitor = 5,
+    FTC = 6,
+    QA = 7,
+    FreeTrial = 8,
+    Sandbox = 9,
+    Competitor2 = 10,
 }
 ```
 
@@ -2493,32 +2410,28 @@ serviceWorker.ts header: "// register() is not called by default." / "https://bi
 ```tsx
 // AgentLocations.tsx — selectLocation (l377-416)
 // Copy both Maps before mutating, then setState with the new references
-const currentList = new Map(selectedAgentLocations)
-const removedList = new Map(removedAgentLocations)
+const currentList = new Map(selectedAgentLocations);
+const removedList = new Map(removedAgentLocations);
 // ... existing .set / .delete calls on currentList / removedList ...
-setSelectedAgentLocations(currentList)
-setRemovedAgentLocations(removedList)
+setSelectedAgentLocations(currentList);
+setRemovedAgentLocations(removedList);
 
 // Labels.tsx — removeLabel (l65-71)
 // Replace lodash remove() + same-ref setState with a filtered array
-label.active = false // if this side-effect is still needed, note it mutates shared object — prefer immutable update
-setLabels(labels!.filter((l) => l.id !== label.id))
+label.active = false; // if this side-effect is still needed, note it mutates shared object — prefer immutable update
+setLabels(labels!.filter((l) => l.id !== label.id));
 
 // MatcherResultsTable.tsx — in-place property mutation (l558)
 // Replace: matcherResults[index].selected = selected;
 //          setMatcherResults([...matcherResults]);
 // With:
-setMatcherResults(
-  matcherResults.map((r, i) => (i === index ? { ...r, selected } : r)),
-)
+setMatcherResults(matcherResults.map((r, i) => (i === index ? { ...r, selected } : r)));
 
 // FilterBar.tsx — removeFilter (l1040+)
 // Replace in-place filterDefinitions[i].selected = false / selectedFilterDefinitions.splice(...)
 // With mapped copies:
-const updatedDefs = filterDefinitions.map((f, i) =>
-  i === targetIndex ? { ...f, selected: false } : f,
-)
-setFilterDefinitions(updatedDefs)
+const updatedDefs = filterDefinitions.map((f, i) => (i === targetIndex ? { ...f, selected: false } : f));
+setFilterDefinitions(updatedDefs);
 ```
 
 > **Evidence:**
@@ -2551,21 +2464,18 @@ AgentLocations.tsx:377-378 `const currentList = selectedAgentLocations; const re
 
 // social-curation.api.ts — gate API-response logs
 if (SHOW_LOGS) {
-  console.log('getPost response', response)
+    console.log('getPost response', response);
 }
 if (SHOW_LOGS) {
-  console.log('getContentTaskStats response', response)
+    console.log('getContentTaskStats response', response);
 }
 if (SHOW_LOGS) {
-  console.log('createSocialPost response', response)
+    console.log('createSocialPost response', response);
 }
 
 // SocialCuration.tsx:1092 — gate error payload log
 if (SHOW_LOGS) {
-  console.log('Error with message', {
-    message: err.message,
-    details: err.customDetails || err.response?.data,
-  })
+    console.log('Error with message', { message: err.message, details: err.customDetails || err.response?.data });
 }
 ```
 
@@ -2592,47 +2502,38 @@ preview.tsx:114 `console.log('profile data', { profileName, profileImageUrl, ful
 ```tsx
 // CustomerContacts.tsx — hoist to module scope, pass closed-over values as props
 interface OptInCellProps {
-  customerItem: CustomerItem
-  setDisplaySourcesModal: (v: boolean) => void
-  setSourceData: (data: SourceData) => void
+    customerItem: CustomerItem;
+    setDisplaySourcesModal: (v: boolean) => void;
+    setSourceData: (data: SourceData) => void;
 }
-const OptInCell = ({
-  customerItem,
-  setDisplaySourcesModal,
-  setSourceData,
-}: OptInCellProps): JSX.Element => {
-  // ... existing body unchanged ...
-}
+const OptInCell = ({ customerItem, setDisplaySourcesModal, setSourceData }: OptInCellProps): JSX.Element => {
+    // ... existing body unchanged ...
+};
 
 // MappingTable.tsx — hoist RenderRow; supply shared data via itemData
 interface RowItemData {
-  rows: Row[]
-  columns: Column[]
-  prepareRow: (row: Row) => void
-  setRowHeight: (index: number, size: number) => void
+    rows: Row[];
+    columns: Column[];
+    prepareRow: (row: Row) => void;
+    setRowHeight: (index: number, size: number) => void;
 }
-const RenderRow: FunctionComponent<ListChildComponentProps<RowItemData>> = ({
-  index,
-  style,
-  data,
-}) => {
-  const { rows, columns, prepareRow, setRowHeight } = data
-  const rowRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (rowRef.current)
-      setRowHeight(index, rowRef.current.getBoundingClientRect().height)
-  }, [index, setRowHeight])
-  // ... existing render logic using rows[index] ...
-}
+const RenderRow: FunctionComponent<ListChildComponentProps<RowItemData>> = ({ index, style, data }) => {
+    const { rows, columns, prepareRow, setRowHeight } = data;
+    const rowRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (rowRef.current) setRowHeight(index, rowRef.current.getBoundingClientRect().height);
+    }, [index, setRowHeight]);
+    // ... existing render logic using rows[index] ...
+};
 
 // In the parent render — pass itemData instead of closing over variables
-;<VariableSizeList
-  itemData={{ rows, columns, prepareRow, setRowHeight }}
-  itemCount={rows.length}
-  // ...other props
+<VariableSizeList
+    itemData={{ rows, columns, prepareRow, setRowHeight }}
+    itemCount={rows.length}
+    // ...other props
 >
-  {RenderRow}
-</VariableSizeList>
+    {RenderRow}
+</VariableSizeList>;
 ```
 
 > **Evidence:**
@@ -2655,27 +2556,17 @@ CustomerContacts.tsx:61 `const OptInCell = ({ customerItem }: any): JSX.Element 
 
 ```ts
 // Non-component / imperative mutation call sites — replace raw axios with:
-import { store } from 'store'
-import { ticketsApi } from 'tickets/api/Tickets'
+import { store } from 'store';
+import { ticketsApi } from 'tickets/api/Tickets';
 
 // instead of: await saveTicket(tenantId, payload)
-await store
-  .dispatch(ticketsApi.endpoints.saveTicket.initiate({ tenantId, ...payload }))
-  .unwrap()
+await store.dispatch(ticketsApi.endpoints.saveTicket.initiate({ tenantId, ...payload })).unwrap();
 
 // instead of: await bulkSaveTickets(tenantId, tickets)
-await store
-  .dispatch(
-    ticketsApi.endpoints.bulkSaveTickets.initiate({ tenantId, tickets }),
-  )
-  .unwrap()
+await store.dispatch(ticketsApi.endpoints.bulkSaveTickets.initiate({ tenantId, tickets })).unwrap();
 
 // instead of: await assignTickets(tenantId, payload)
-await store
-  .dispatch(
-    ticketsApi.endpoints.assignTickets.initiate({ tenantId, ...payload }),
-  )
-  .unwrap()
+await store.dispatch(ticketsApi.endpoints.assignTickets.initiate({ tenantId, ...payload })).unwrap();
 ```
 
 > **Evidence:**
@@ -2702,30 +2593,30 @@ export const assignTickets = async(...) => axios.patch('.../assign-tickets')    
 
 ```ts
 // config/tenantFeatureFlags.ts  – centralise allow-lists
-import { TenantId } from 'path/to/tenant-id-enum'
+import { TenantId } from 'path/to/tenant-id-enum';
 
 /** Tenants for which the attestation prompt is shown */
 export const ATTESTATION_TENANT_ALLOWLIST: TenantId[] = [
-  TenantId.FordDirect,
-  TenantId.QATestSudha,
-  TenantId.QAAutomation,
-  TenantId.QAAutomation2,
-]
+    TenantId.FordDirect,
+    TenantId.QATestSudha,
+    TenantId.QAAutomation,
+    TenantId.QAAutomation2,
+];
 
 /** Tenants for which label editing is permitted */
 export const LABEL_EDIT_TENANT_ALLOWLIST: TenantId[] = [
-  TenantId.FordDirect,
-  TenantId.QATestMessage,
-  TenantId.QATestSudha,
-]
+    TenantId.FordDirect,
+    TenantId.QATestMessage,
+    TenantId.QATestSudha,
+];
 
 // useEntitiesDownload.tsx – replace hardcoded QA URL
-const BASE_URL = process.env.REACT_APP_REPUTATION_BASE_URL ?? ''
+const BASE_URL = process.env.REACT_APP_REPUTATION_BASE_URL ?? '';
 // ...
 if (window.location.hostname === 'localhost' && BASE_URL) {
-  downloadFile(`${BASE_URL}${uri}`, true)
+    downloadFile(`${BASE_URL}${uri}`, true);
 } else {
-  downloadFile(uri)
+    downloadFile(uri);
 }
 ```
 
@@ -2771,23 +2662,23 @@ SocialCuration.tsx:59 `export const SocialCuration: FunctionComponent = () => {`
 
 ```ts
 // shared/constants/stageIds.ts  (new file)
-export const OPEN_STAGE_ID = '5d4862d75b3068d063a3e712'
-export const CLOSED_STAGE_ID = '5d48656dbeee8a258cdcb7b1'
+export const OPEN_STAGE_ID = '5d4862d75b3068d063a3e712';
+export const CLOSED_STAGE_ID = '5d48656dbeee8a258cdcb7b1';
 
 // shared/constants/tenantIds.ts  (new file)
-export const GATED_TENANT_ID = 123676
+export const GATED_TENANT_ID = 123676;
 
 // admin/automation/ruleBuilder/constants/fieldNames.ts  (new file)
 export const enum FieldName {
-  Sla = '__sla__',
-  TicketAckEnabled = '__ticket_ack_enabled__',
-  TicketDefinitionId = '__ticket_definitionID__',
-  TicketType = '__ticket_type__',
-  Tags = '__tags__',
-  Endpoint = 'endpoint',
-  HttpMethod = 'httpMethod',
-  Username = 'username',
-  Password = 'password',
+    Sla = '__sla__',
+    TicketAckEnabled = '__ticket_ack_enabled__',
+    TicketDefinitionId = '__ticket_definitionID__',
+    TicketType = '__ticket_type__',
+    Tags = '__tags__',
+    Endpoint = 'endpoint',
+    HttpMethod = 'httpMethod',
+    Username = 'username',
+    Password = 'password',
 }
 ```
 
@@ -2865,63 +2756,63 @@ ConversationMetaDataModal.tsx:236-243: dispatch(UpdateConversation) + setShowMod
 // MetaDataType — canonical location (keep one, import in the other)
 // surveys/builder/components/survey-settings/meta-data-settings/MetaDataSettings.tsx
 export interface MetaDataType {
-  id: string
-  key: string
-  value: string
-  type: string
-  required: boolean
+    id: string;
+    key: string;
+    value: string;
+    type: string;
+    required: boolean;
 }
 
 // surveys/builder/components/survey-settings/add-meta-data-modal/AddMetaDataModal.tsx
-import type { MetaDataType } from '../meta-data-settings/MetaDataSettings'
+import type { MetaDataType } from '../meta-data-settings/MetaDataSettings';
 
 // Group — canonical location (reconcile enum form in core/util/DateRange.tsx)
 // common/util/DateRange.ts
 export enum Group {
-  Day = 1,
-  Week = 2,
-  Month = 3,
-  Quarter = 4,
-  Year = 5,
-  FiscalYear = 11,
+    Day = 1,
+    Week = 2,
+    Month = 3,
+    Quarter = 4,
+    Year = 5,
+    FiscalYear = 11,
 }
 
 // core/util/DateRange.tsx — replace local enum/const with import
-import { Group } from 'common/util/DateRange'
+import { Group } from 'common/util/DateRange';
 
 // OperandType — audit backend values first; rename diverged variants before unifying
 // Example rename approach (do NOT renumber existing values):
 // common/expressions/Expressions.types.ts
 export enum OperandType {
-  None = 1,
-  Integer = 2,
-  Double = 3,
-  Set = 4,
-  String = 5,
+    None = 1,
+    Integer = 2,
+    Double = 3,
+    Set = 4,
+    String = 5,
 }
 
 // admin/automation — uses Boolean=6 only; keep as AutomationOperandType until audited
 export enum AutomationOperandType {
-  Boolean = 6,
+    Boolean = 6,
 }
 
 // Level — audit backend values; rename to surface the divergence explicitly
 // tickets/actions2/common/action.types.ts
 export enum ActionLevel {
-  Tenant = 0,
-  Agency = 1,
+    Tenant = 0,
+    Agency = 1,
 }
 
 // tickets/actions2/common/ticket-constants.ts
 export enum TicketLevel {
-  Location = 0,
-  Tenant = 1,
+    Location = 0,
+    Tenant = 1,
 }
 
 // tickets/api/Tickets.types.ts
 export enum ApiLevel {
-  Tenant = 'Tenant',
-  Agency = 'Agency',
+    Tenant = 'Tenant',
+    Agency = 'Agency',
 }
 ```
 
@@ -3005,20 +2896,20 @@ TableAdvanced.tsx: `}: any) =>` (line 71), `columns: Column<any>[]`, `rowsData: 
 ```tsx
 // StatusMessage.tsx — replace useState + useEffect with a direct computation
 const statusClassnames = currentStatus
-  ? classnames({
-      /* existing class map */
-    })
-  : undefined
+    ? classnames({
+          /* existing class map */
+      })
+    : undefined;
 
 // ActionsMenu.tsx — replace useState + useEffect with a direct computation
 const iconClassname = classnames('icon-ellipsis-h', {
-  vertical: rotation === 'vertical',
-})
+    vertical: rotation === 'vertical',
+});
 
 // ReviewsPager.tsx — compute derived pagination values in render
-const currentPageCount = Math.ceil(currentCount / reviewsPerPage!)
-const canPreviousPage = currentPage > 0
-const canNextPage = currentPage + 1 < currentPageCount
+const currentPageCount = Math.ceil(currentCount / reviewsPerPage!);
+const canPreviousPage = currentPage > 0;
+const canNextPage = currentPage + 1 < currentPageCount;
 // Keep existing effects only for side-effect logic (dispatch + page reset).
 ```
 
@@ -3163,27 +3054,25 @@ RuleHistory.tsx:40: `<h3 className="mb-4">Rule Change History</h3>`. CustomerCon
 
 ```tsx
 // Example: composite-key registry for isTabDirty
-type DirtyKey = `${IntegrationType}:${ConnectorType}`
+type DirtyKey = `${IntegrationType}:${ConnectorType}`;
 
 const tabDirtyFns: Partial<Record<DirtyKey, (data: TabData) => boolean>> = {
-  [`${IntegrationType.ReviewRequest}:${ConnectorType.Sftp}`]: (d) =>
-    !isEmpty(d.sftpFormValues),
-  [`${IntegrationType.ReviewRequest}:${ConnectorType.Yardi}`]: (d) =>
-    !isEmpty(d.yardiFormValues),
-  // ... one entry per (integrationType, connectorType) pair
-  // Bespoke CDK arm kept explicit:
-  // [`${IntegrationType.ReviewRequest}:${ConnectorType.Cdk}`]: (d) => d.tenant?.integration != null && !isEmpty(d.cdkFormValues),
-}
+    [`${IntegrationType.ReviewRequest}:${ConnectorType.Sftp}`]: (d) => !isEmpty(d.sftpFormValues),
+    [`${IntegrationType.ReviewRequest}:${ConnectorType.Yardi}`]: (d) => !isEmpty(d.yardiFormValues),
+    // ... one entry per (integrationType, connectorType) pair
+    // Bespoke CDK arm kept explicit:
+    // [`${IntegrationType.ReviewRequest}:${ConnectorType.Cdk}`]: (d) => d.tenant?.integration != null && !isEmpty(d.cdkFormValues),
+};
 
 function isTabDirty(
-  tabType: TabType,
-  integrationType: IntegrationType,
-  connectorType: ConnectorType,
-  data: TabData,
+    tabType: TabType,
+    integrationType: IntegrationType,
+    connectorType: ConnectorType,
+    data: TabData,
 ): boolean {
-  if (tabType !== TabType.Automation) return false
-  const key: DirtyKey = `${integrationType}:${connectorType}`
-  return tabDirtyFns[key]?.(data) ?? false
+    if (tabType !== TabType.Automation) return false;
+    const key: DirtyKey = `${integrationType}:${connectorType}`;
+    return tabDirtyFns[key]?.(data) ?? false;
 }
 ```
 
@@ -3303,15 +3192,15 @@ FilterBar.tsx L1: `/* eslint-disable */` (blanket whole-file). validation.tsx L3
 
 ```ts
 const barChartOption = useMemo(() => {
-  const theme = getChartTheme(renderMode, fontSize)
+    const theme = getChartTheme(renderMode, fontSize);
 
-  // ... existing body unchanged ...
+    // ... existing body unchanged ...
 }, [
-  // existing deps minus theme.grid / theme.tooltip / theme.xAxis.axisLabel
-  renderMode,
-  fontSize,
-  // ... all other original deps ...
-])
+    // existing deps minus theme.grid / theme.tooltip / theme.xAxis.axisLabel
+    renderMode,
+    fontSize,
+    // ... all other original deps ...
+]);
 ```
 
 > **Evidence:**
@@ -3334,27 +3223,24 @@ Line 27: `const theme = getChartTheme(renderMode, fontSize);` is computed outsid
 
 ```tsx
 // 1. Add useMemo to the React import (L1)
-import React, { useMemo, useEffect /* existing imports */ } from 'react'
+import React, { useMemo, useEffect /* existing imports */ } from 'react';
 
 // 2. Stabilize each config (L213-248) — example for fullstoryConfig; apply the same pattern to amplitudeConfig, walkmeConfig, levelaccessConfig, pendoConfig
 const fullstoryConfig = useMemo(
-  () => ({
-    enabled: config!.secrets['fullstory.enabled'],
-    org: config!.secrets['fullstory.org'],
-    // ...remaining fields
-  }),
-  [
-    config!.secrets['fullstory.enabled'],
-    config!.secrets['fullstory.org'] /*, ...*/,
-  ],
-)
+    () => ({
+        enabled: config!.secrets['fullstory.enabled'],
+        org: config!.secrets['fullstory.org'],
+        // ...remaining fields
+    }),
+    [config!.secrets['fullstory.enabled'], config!.secrets['fullstory.org'] /*, ...*/],
+);
 
 // 3. Guard the Salesforce script injection (L389-396)
 if (!document.getElementById('salesforce_eistein')) {
-  const script = document.createElement('script')
-  script.id = 'salesforce_eistein'
-  // ...existing script setup
-  document.body.appendChild(script)
+    const script = document.createElement('script');
+    script.id = 'salesforce_eistein';
+    // ...existing script setup
+    document.body.appendChild(script);
 }
 ```
 
@@ -3481,22 +3367,22 @@ Line 141: `const styles = {` … line 349 `};` — a plain object literal (NOT u
 
 ```ts
 // At module top level, alongside the existing accessibility registration (line 18)
-highchartsAccessibility(Highcharts)
-highchartsMore(Highcharts)
-SolidGauge(Highcharts)
-Treemap(Highcharts)
-Wordcloud(Highcharts)
-Bullet(Highcharts)
+highchartsAccessibility(Highcharts);
+highchartsMore(Highcharts);
+SolidGauge(Highcharts);
+Treemap(Highcharts);
+Wordcloud(Highcharts);
+Bullet(Highcharts);
 ```
 
 > **Evidence:**
 
 ```ts
-highchartsMore(Highcharts)
-SolidGauge(Highcharts)
-Treemap(Highcharts)
-Wordcloud(Highcharts)
-Bullet(Highcharts)
+highchartsMore(Highcharts);
+SolidGauge(Highcharts);
+Treemap(Highcharts);
+Wordcloud(Highcharts);
+Bullet(Highcharts);
 ```
 
 > **Note:** The same file already uses the correct pattern: `highchartsAccessibility(Highcharts)` is registered once at module top level (line 18). Highcharts no-ops re-registration internally, so there is no functional regression — the impact is purely redundant per-render work across all chart usage sites.
@@ -3515,10 +3401,10 @@ Bullet(Highcharts)
 
 ```tsx
 useEffect(() => {
-  loadCount().then((rolesCount) => {
-    setCount(rolesCount)
-  })
-}, []) // duplicate — getUsersList at line 353 already calls loadCount unconditionally
+    loadCount().then((rolesCount) => {
+        setCount(rolesCount);
+    });
+}, []); // duplicate — getUsersList at line 353 already calls loadCount unconditionally
 ```
 
 > **Note:** After removing the standalone effect, the count will appear slightly later on first load because `getUsersList` awaits `getUsers` before calling `loadCount`, whereas the removed effect ran them in parallel. There is no functional loss: count is re-fetched on every subsequent refresh via `handleAddUsers`, `handleRemoveSuccess`, and `getUsersList`.
@@ -3536,7 +3422,7 @@ useEffect(() => {
 > **Evidence:**
 
 ```ts
-const updatedJobsContainer = cloneDeep(jobsContainer) // repeated at lines 130, 139, 149, 159, 170. RunningJob holds promise: Promise<PollJob>, resolve/reject functions, timeoutId. lodash returns the same reference for Promise/function fields — only primitives and plain objects are copied.
+const updatedJobsContainer = cloneDeep(jobsContainer); // repeated at lines 130, 139, 149, 159, 170. RunningJob holds promise: Promise<PollJob>, resolve/reject functions, timeoutId. lodash returns the same reference for Promise/function fields — only primitives and plain objects are copied.
 ```
 
 > **Note:** If a style-driven refactor is undertaken later, each case that mutates a nested runningJobs[jobId] property (lines 142, 152, 162–163, 173–174) must spread every affected level, not just the top-level container.
@@ -3553,10 +3439,10 @@ const updatedJobsContainer = cloneDeep(jobsContainer) // repeated at lines 130, 
 
 ```ts
 // BusinessEmailValidation.ts — add after the existing array export
-export const StandardEmailDomainsSet = new Set(StandardEmailDomains)
+export const StandardEmailDomainsSet = new Set(StandardEmailDomains);
 
 // SelfServiceForm.tsx:87 — replace the Array.includes call
-const validEmailDomain = !StandardEmailDomainsSet.has(emailDomain)
+const validEmailDomain = !StandardEmailDomainsSet.has(emailDomain);
 ```
 
 > **Evidence:**
@@ -3586,5 +3472,3 @@ ReviewsYeti.tsx:102 `const handlers: Handlers = {` (plain object literal); revie
 > **Note:** Stabilizing only handlers without also applying React.memo to ReviewYeti/Review is a no-op for render reduction. The full fix requires React.memo on both children plus stable identities for all object props passed inside the .map(), including the handlers mutation sites at ReviewsYeti.tsx:151,157.
 
 </details>
-
----
